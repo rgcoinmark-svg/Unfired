@@ -881,6 +881,374 @@ const CSS = `
   .check-box.checked { background: var(--green); border-color: var(--green); }
   .check-text { font-size: 13px; color: var(--text); line-height: 1.5; }
   .check-text.done { text-decoration: line-through; color: var(--text-3); }
+
+  /* ─── LANDING PAGE ─── */
+  .landing {
+    min-height: 100vh; width: 100%;
+    display: flex; flex-direction: column; align-items: center;
+    background: var(--bg); position: relative; overflow: hidden;
+  }
+  .landing-bg-1 {
+    position: absolute; top: -20%; left: -10%; width: 800px; height: 800px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 55%);
+    filter: blur(80px); pointer-events: none; animation: landing-drift-1 20s ease-in-out infinite;
+  }
+  .landing-bg-2 {
+    position: absolute; bottom: -25%; right: -15%; width: 700px; height: 700px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 55%);
+    filter: blur(80px); pointer-events: none; animation: landing-drift-2 25s ease-in-out infinite;
+  }
+  .landing-bg-3 {
+    position: absolute; top: 35%; left: 50%; width: 500px; height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(45,212,191,0.05) 0%, transparent 55%);
+    filter: blur(60px); pointer-events: none; transform: translateX(-50%);
+  }
+  @keyframes landing-drift-1 {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(40px, 30px); }
+  }
+  @keyframes landing-drift-2 {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(-30px, -40px); }
+  }
+
+  .landing-nav {
+    width: 100%; max-width: 1100px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 24px 32px;
+    position: relative; z-index: 10;
+    animation: fadeIn 0.6s ease both;
+  }
+  .landing-nav-brand { display: flex; align-items: center; gap: 12px; }
+  .landing-nav-brand .logo { width: 38px; height: 38px; border-radius: 12px; }
+  .landing-nav-brand .app-name { font-size: 18px; }
+  .landing-nav-tag {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+    padding: 4px 10px; border-radius: 20px;
+    background: rgba(45,212,191,0.1); color: var(--teal);
+    border: 1px solid var(--teal-border); text-transform: uppercase;
+  }
+
+  .landing-hero {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; text-align: center;
+    padding: 40px 24px 20px; max-width: 700px;
+    position: relative; z-index: 10;
+  }
+
+  .landing-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--accent-bg); border: 1px solid var(--accent-border);
+    border-radius: 24px; padding: 6px 16px 6px 8px;
+    font-size: 12px; font-weight: 600; color: var(--accent-2);
+    margin-bottom: 28px;
+    animation: fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) 0.1s both;
+  }
+  .landing-badge-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px rgba(16,185,129,0.5);
+    animation: breathe 2s ease-in-out infinite;
+  }
+
+  .landing-h1 {
+    font-size: clamp(36px, 6vw, 64px);
+    font-weight: 900; line-height: 1.08; letter-spacing: -1.5px;
+    color: var(--text); margin-bottom: 20px;
+    animation: fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) 0.2s both;
+  }
+  .landing-h1 .gradient {
+    background: linear-gradient(135deg, #6366f1 0%, #a78bfa 40%, #2dd4bf 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .landing-sub {
+    font-size: clamp(15px, 2vw, 18px);
+    color: var(--text-2); line-height: 1.7; max-width: 520px;
+    margin-bottom: 36px; font-weight: 400;
+    animation: fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) 0.3s both;
+  }
+
+  .landing-cta-row {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    justify-content: center;
+    animation: fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) 0.4s both;
+  }
+  .landing-cta {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 16px 32px; border-radius: 16px; border: none;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: white; font-size: 15px; font-weight: 700;
+    cursor: pointer; letter-spacing: 0.1px;
+    box-shadow: 0 8px 32px rgba(99,102,241,0.4), 0 0 0 1px rgba(99,102,241,0.3);
+    transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+    font-family: 'Inter', sans-serif;
+  }
+  .landing-cta:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 48px rgba(99,102,241,0.5), 0 0 0 1px rgba(99,102,241,0.4);
+  }
+  .landing-cta:active { transform: translateY(0); }
+
+  .landing-cta-secondary {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 16px 28px; border-radius: 16px;
+    border: 1.5px solid var(--border-2);
+    background: var(--surface); color: var(--text-2);
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+    font-family: 'Inter', sans-serif;
+  }
+  .landing-cta-secondary:hover {
+    border-color: var(--accent-border); color: var(--accent-2);
+    background: var(--accent-bg); transform: translateY(-2px);
+  }
+
+  .landing-stats {
+    display: flex; gap: 40px; margin-top: 48px;
+    animation: fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) 0.5s both;
+  }
+  .landing-stat { text-align: center; }
+  .landing-stat-num {
+    font-size: 28px; font-weight: 900; color: var(--text);
+    letter-spacing: -0.5px; line-height: 1;
+  }
+  .landing-stat-label {
+    font-size: 11px; color: var(--text-3); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.5px; margin-top: 6px;
+  }
+
+  .landing-features {
+    width: 100%; max-width: 1000px; padding: 40px 24px 20px;
+    position: relative; z-index: 10;
+  }
+  .landing-features-label {
+    text-align: center; font-size: 10px; font-weight: 700;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--text-3); margin-bottom: 24px;
+    animation: fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) 0.55s both;
+  }
+  .landing-features-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  .landing-fcard {
+    background: var(--surface); border: 1px solid var(--border-2);
+    border-radius: var(--radius); padding: 22px 18px;
+    transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+    position: relative; overflow: hidden;
+  }
+  .landing-fcard::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--fcard-color, var(--accent));
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .landing-fcard:hover { transform: translateY(-4px); box-shadow: var(--shadow); border-color: var(--border-2); }
+  .landing-fcard:hover::before { opacity: 1; }
+  .landing-fcard-icon {
+    width: 42px; height: 42px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 14px;
+  }
+  .landing-fcard h4 { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .landing-fcard p { font-size: 12.5px; color: var(--text-3); line-height: 1.55; font-weight: 500; }
+
+  .landing-footer {
+    width: 100%; padding: 24px 32px; text-align: center;
+    position: relative; z-index: 10;
+    animation: fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) 0.7s both;
+  }
+  .landing-footer-text {
+    font-size: 11.5px; color: var(--text-3); line-height: 1.6;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+
+  /* ─── AUTH PAGE ─── */
+  .auth-page {
+    min-height: 100vh; width: 100%;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg); position: relative; overflow: hidden;
+    padding: 24px;
+    animation: fadeIn 0.5s ease both;
+  }
+  .auth-bg-1 {
+    position: absolute; top: -15%; left: -10%; width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 55%);
+    filter: blur(80px); pointer-events: none;
+  }
+  .auth-bg-2 {
+    position: absolute; bottom: -20%; right: -10%; width: 500px; height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(139,92,246,0.06) 0%, transparent 55%);
+    filter: blur(80px); pointer-events: none;
+  }
+  .auth-card {
+    width: 100%; max-width: 400px;
+    background: var(--surface); border: 1px solid var(--border-2);
+    border-radius: 24px; padding: 40px 32px;
+    position: relative; z-index: 10;
+    box-shadow: var(--shadow-lg);
+    animation: fadeUp 0.6s cubic-bezier(0.16,1,0.3,1) 0.1s both;
+  }
+  .auth-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 200px;
+    background: linear-gradient(180deg, rgba(99,102,241,0.04) 0%, transparent 100%);
+    pointer-events: none; border-radius: 24px 24px 0 0;
+  }
+  .auth-header {
+    text-align: center; margin-bottom: 32px; position: relative;
+  }
+  .auth-logo {
+    width: 52px; height: 52px; border-radius: 16px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+    box-shadow: 0 8px 24px rgba(99,102,241,0.35);
+  }
+  .auth-title {
+    font-size: 22px; font-weight: 800; color: var(--text);
+    letter-spacing: -0.5px; margin-bottom: 6px;
+  }
+  .auth-subtitle {
+    font-size: 13px; color: var(--text-3); font-weight: 500;
+  }
+  .auth-tabs {
+    display: flex; gap: 4px; margin-bottom: 28px;
+    background: var(--surface2); border-radius: 12px; padding: 4px;
+    position: relative;
+  }
+  .auth-tab {
+    flex: 1; padding: 10px; border: none;
+    background: transparent; border-radius: 10px;
+    color: var(--text-3); cursor: pointer;
+    font-size: 13px; font-weight: 600;
+    transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
+    font-family: 'Inter', sans-serif;
+  }
+  .auth-tab.active {
+    background: var(--accent-bg); color: var(--accent-2);
+    box-shadow: 0 0 0 1px var(--accent-border);
+  }
+  .auth-tab:not(.active):hover { color: var(--text-2); }
+  .auth-form { display: flex; flex-direction: column; gap: 16px; position: relative; }
+  .auth-field { display: flex; flex-direction: column; gap: 6px; }
+  .auth-label {
+    font-size: 12px; font-weight: 600; color: var(--text-2);
+    letter-spacing: 0.1px;
+  }
+  .auth-input {
+    width: 100%; background: var(--surface2); border: 1.5px solid var(--border-2);
+    border-radius: 12px; padding: 13px 16px;
+    color: var(--text); font-size: 14px; outline: none;
+    transition: all 0.25s; font-weight: 400;
+    font-family: 'Inter', sans-serif;
+  }
+  .auth-input:focus {
+    border-color: var(--accent-border);
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.08);
+  }
+  .auth-input::placeholder { color: var(--text-3); }
+  .auth-submit {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border: none; border-radius: 12px;
+    color: white; font-weight: 700; font-size: 14px;
+    cursor: pointer; letter-spacing: 0.1px;
+    transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
+    box-shadow: 0 4px 20px rgba(99,102,241,0.35);
+    font-family: 'Inter', sans-serif;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-top: 4px;
+  }
+  .auth-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(99,102,241,0.45);
+  }
+  .auth-submit:active { transform: translateY(0); }
+  .auth-divider {
+    display: flex; align-items: center; gap: 14px;
+    margin: 4px 0;
+  }
+  .auth-divider::before, .auth-divider::after {
+    content: ''; flex: 1; height: 1px;
+    background: var(--border-2);
+  }
+  .auth-divider span {
+    font-size: 11px; color: var(--text-3); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .auth-google {
+    width: 100%; padding: 13px;
+    background: var(--surface2); border: 1.5px solid var(--border-2);
+    border-radius: 12px; color: var(--text);
+    font-size: 13.5px; font-weight: 600; cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
+    font-family: 'Inter', sans-serif;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .auth-google:hover {
+    border-color: var(--accent-border); background: var(--accent-bg);
+    transform: translateY(-1px);
+  }
+  .auth-google-icon {
+    width: 18px; height: 18px;
+  }
+  .auth-footer {
+    text-align: center; margin-top: 20px;
+    font-size: 12px; color: var(--text-3);
+  }
+  .auth-footer a {
+    color: var(--accent-2); text-decoration: none; font-weight: 600;
+    cursor: pointer;
+  }
+  .auth-footer a:hover { text-decoration: underline; }
+  .auth-back {
+    position: absolute; top: -56px; left: 0;
+    display: inline-flex; align-items: center; gap: 6px;
+    background: none; border: none; color: var(--text-3);
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    font-family: 'Inter', sans-serif; transition: color 0.2s;
+  }
+  .auth-back:hover { color: var(--accent-2); }
+  .auth-error {
+    background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
+    border-radius: 10px; padding: 10px 14px;
+    font-size: 12.5px; color: #f87171; font-weight: 500;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* Transition from landing to app */
+  .landing-exit {
+    animation: landing-shrink 0.5s cubic-bezier(0.16,1,0.3,1) forwards;
+  }
+  @keyframes landing-shrink {
+    to { opacity: 0; transform: scale(0.95) translateY(-20px); }
+  }
+  .app-enter {
+    animation: app-grow 0.6s cubic-bezier(0.16,1,0.3,1) 0.2s both;
+  }
+  @keyframes app-grow {
+    from { opacity: 0; transform: scale(0.95) translateY(30px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  @media (max-width: 600px) {
+    .landing-nav { padding: 18px 20px; }
+    .landing-hero { padding: 30px 20px 16px; }
+    .landing-stats { gap: 24px; }
+    .landing-stat-num { font-size: 22px; }
+    .landing-features { padding: 30px 16px 16px; }
+    .landing-features-grid { grid-template-columns: 1fr 1fr; }
+    .landing-cta-row { flex-direction: column; }
+    .landing-cta, .landing-cta-secondary { width: 100%; justify-content: center; }
+  }
 `;
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
@@ -1828,6 +2196,228 @@ function ResourcesTab() {
   );
 }
 
+// ─── LANDING PAGE ────────────────────────────────────────────────────────────
+
+const LANDING_FEATURES = [
+  { icon: "message",       color: "#6366f1", title: "AI Legal Chat",       desc: "Get instant answers on workplace rights, entitlements & obligations" },
+  { icon: "search-dollar", color: "#f59e0b", title: "Payslip Auditor",     desc: "Check if you're being underpaid against your Modern Award rates" },
+  { icon: "compass",       color: "#ec4899", title: "Situation Triage",    desc: "Classify your issue & get tailored next steps in seconds" },
+  { icon: "file-text",     color: "#8b5cf6", title: "Letter Generator",    desc: "Professional workplace letters with legal references built in" },
+  { icon: "clock",         color: "#ef4444", title: "Deadline Tracker",    desc: "Never miss a critical filing window for your claim" },
+  { icon: "clipboard",     color: "#10b981", title: "Evidence Checklist",  desc: "Know exactly what to collect before it disappears" },
+];
+
+function LandingPage({ onEnter }) {
+  const [exiting, setExiting] = useState(false);
+
+  const handleEnter = () => {
+    setExiting(true);
+    setTimeout(() => onEnter(), 450);
+  };
+
+  return (
+    <div className={`landing ${exiting ? "landing-exit" : ""}`}>
+      <div className="landing-bg-1" />
+      <div className="landing-bg-2" />
+      <div className="landing-bg-3" />
+
+      {/* Nav */}
+      <nav className="landing-nav">
+        <div className="landing-nav-brand">
+          <div className="logo"><Icon name="shield" size={20} color="white" strokeWidth={2} /></div>
+          <div className="app-name">Unfired</div>
+        </div>
+        <div className="landing-nav-tag">Free & Open Source</div>
+      </nav>
+
+      {/* Hero */}
+      <div className="landing-hero">
+        <h1 className="landing-h1">
+          Know your <span className="gradient">workplace rights</span> before it's too late
+        </h1>
+
+        <p className="landing-sub">
+          Free AI-powered assistant for Australian workers. Check your pay, understand your entitlements, and take action — all in one place.
+        </p>
+
+        <div className="landing-cta-row">
+          <button className="landing-cta" onClick={handleEnter}>
+            Get Started <Icon name="arrow-right" size={18} color="white" />
+          </button>
+          <button className="landing-cta-secondary" onClick={handleEnter}>
+            <Icon name="compass" size={17} /> Explore Tools
+          </button>
+        </div>
+
+        <div className="landing-stats">
+          <div className="landing-stat">
+            <div className="landing-stat-num">6</div>
+            <div className="landing-stat-label">Free Tools</div>
+          </div>
+          <div className="landing-stat">
+            <div className="landing-stat-num">21</div>
+            <div className="landing-stat-label">Day Claim Limit</div>
+          </div>
+          <div className="landing-stat">
+            <div className="landing-stat-num">24/7</div>
+            <div className="landing-stat-label">AI Available</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Features */}
+      <div className="landing-features">
+        <div className="landing-features-label">Everything you need</div>
+        <div className="landing-features-grid">
+          {LANDING_FEATURES.map((f, i) => (
+            <div key={f.title} className="landing-fcard"
+              style={{ "--fcard-color": f.color, animation: `fadeUp 0.5s cubic-bezier(0.16,1,0.3,1) ${0.6 + i * 0.07}s both` }}>
+              <div className="landing-fcard-icon" style={{ background: `${f.color}15` }}>
+                <Icon name={f.icon} size={20} color={f.color} />
+              </div>
+              <h4>{f.title}</h4>
+              <p>{f.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="landing-footer">
+        <div className="landing-footer-text">
+          <Icon name="alert-tri" size={13} color="#fbbf24" />
+          General information only, not legal advice. For serious matters, consult a lawyer.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── AUTH PAGE ───────────────────────────────────────────────────────────────
+
+function AuthPage({ onLogin, onBack }) {
+  const [mode, setMode] = useState("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [error, setError] = useState("");
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setError("");
+    if (!email.trim() || !password.trim()) {
+      setError("Please fill in all fields.");
+      return;
+    }
+    if (mode === "signup" && !name.trim()) {
+      setError("Please enter your name.");
+      return;
+    }
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+    // TODO: Wire up real auth (Firebase, Supabase, etc.)
+    onLogin({ email, name: name || email.split("@")[0] });
+  };
+
+  const handleGoogleLogin = () => {
+    // TODO: Wire up Google OAuth
+    onLogin({ email: "user@gmail.com", name: "User" });
+  };
+
+  return (
+    <div className="auth-page">
+      <div className="auth-bg-1" />
+      <div className="auth-bg-2" />
+
+      <div style={{ position: "relative" }}>
+        <button className="auth-back" onClick={onBack}>
+          <Icon name="arrow-left" size={16} /> Back
+        </button>
+
+        <div className="auth-card">
+          <div className="auth-header">
+            <div className="auth-logo">
+              <Icon name="shield" size={26} color="white" strokeWidth={2} />
+            </div>
+            <div className="auth-title">{mode === "login" ? "Welcome back" : "Create account"}</div>
+            <div className="auth-subtitle">
+              {mode === "login" ? "Sign in to access your workspace" : "Get started with Unfired for free"}
+            </div>
+          </div>
+
+          <div className="auth-tabs">
+            <button className={`auth-tab ${mode === "login" ? "active" : ""}`} onClick={() => { setMode("login"); setError(""); }}>
+              Sign In
+            </button>
+            <button className={`auth-tab ${mode === "signup" ? "active" : ""}`} onClick={() => { setMode("signup"); setError(""); }}>
+              Sign Up
+            </button>
+          </div>
+
+          <form className="auth-form" onSubmit={handleSubmit}>
+            {error && (
+              <div className="auth-error">
+                <Icon name="alert-tri" size={14} color="#f87171" /> {error}
+              </div>
+            )}
+
+            {mode === "signup" && (
+              <div className="auth-field">
+                <label className="auth-label">Full Name</label>
+                <input className="auth-input" type="text" placeholder="Your name"
+                  value={name} onChange={e => setName(e.target.value)} />
+              </div>
+            )}
+
+            <div className="auth-field">
+              <label className="auth-label">Email</label>
+              <input className="auth-input" type="email" placeholder="you@example.com"
+                value={email} onChange={e => setEmail(e.target.value)} />
+            </div>
+
+            <div className="auth-field">
+              <label className="auth-label">Password</label>
+              <input className="auth-input" type="password" placeholder="Min. 6 characters"
+                value={password} onChange={e => setPassword(e.target.value)} />
+            </div>
+
+            <button type="submit" className="auth-submit">
+              {mode === "login" ? "Sign In" : "Create Account"}
+              <Icon name="arrow-right" size={17} color="white" />
+            </button>
+
+            <div className="auth-divider"><span>or</span></div>
+
+            <button type="button" className="auth-google" onClick={handleGoogleLogin}>
+              <svg className="auth-google-icon" viewBox="0 0 24 24">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+              </svg>
+              Continue with Google
+            </button>
+          </form>
+
+          <div className="auth-footer">
+            {mode === "login" ? (
+              <>Don't have an account? <a onClick={() => { setMode("signup"); setError(""); }}>Sign up</a></>
+            ) : (
+              <>Already have an account? <a onClick={() => { setMode("login"); setError(""); }}>Sign in</a></>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── APP ─────────────────────────────────────────────────────────────────────
 
 const TABS = [
@@ -1840,49 +2430,64 @@ const TABS = [
 
 export default function App() {
   const [tab, setTab] = useState("chat");
+  const [page, setPage] = useState("landing"); // "landing" | "auth" | "app"
+  const [user, setUser] = useState(null);
+
+  const handleLandingEnter = () => setPage("auth");
+  const handleLogin = (userData) => { setUser(userData); setPage("app"); };
+  const handleBackToLanding = () => setPage("landing");
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      background: "#0a0a0f",
-      display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
-      position: "relative", overflow: "hidden",
-    }}>
+    <>
       <style>{CSS}</style>
+      {page === "landing" && (
+        <LandingPage onEnter={handleLandingEnter} />
+      )}
+      {page === "auth" && (
+        <AuthPage onLogin={handleLogin} onBack={handleBackToLanding} />
+      )}
+      {page === "app" && (
+        <div className="app-enter" style={{
+          minHeight: "100vh",
+          background: "#0a0a0f",
+          display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
+          position: "relative", overflow: "hidden",
+        }}>
+          <div style={{ position: "fixed", top: "-10%", left: "-5%", width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle, rgba(99,102,241,0.06) 0%, transparent 60%)", pointerEvents: "none", filter: "blur(40px)" }} />
+          <div style={{ position: "fixed", bottom: "-15%", right: "-10%", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(139,92,246,0.05) 0%, transparent 60%)", pointerEvents: "none", filter: "blur(40px)" }} />
+          <div style={{ position: "fixed", top: "40%", right: "20%", width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle, rgba(45,212,191,0.03) 0%, transparent 60%)", pointerEvents: "none", filter: "blur(40px)" }} />
 
-      <div style={{ position: "fixed", top: "-10%", left: "-5%", width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle, rgba(99,102,241,0.06) 0%, transparent 60%)", pointerEvents: "none", filter: "blur(40px)" }} />
-      <div style={{ position: "fixed", bottom: "-15%", right: "-10%", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(139,92,246,0.05) 0%, transparent 60%)", pointerEvents: "none", filter: "blur(40px)" }} />
-      <div style={{ position: "fixed", top: "40%", right: "20%", width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle, rgba(45,212,191,0.03) 0%, transparent 60%)", pointerEvents: "none", filter: "blur(40px)" }} />
-
-      <div className="shell">
-        <div className="header">
-          <div className="header-row">
-            <div className="logo"><Icon name="shield" size={22} color="white" strokeWidth={2} /></div>
-            <div>
-              <div className="app-name">Unfired</div>
-              <div className="app-sub">Australian Workplace Rights</div>
+          <div className="shell">
+            <div className="header">
+              <div className="header-row">
+                <div className="logo"><Icon name="shield" size={22} color="white" strokeWidth={2} /></div>
+                <div>
+                  <div className="app-name">Unfired</div>
+                  <div className="app-sub">Australian Workplace Rights</div>
+                </div>
+                <div className="status-dot">Online</div>
+              </div>
             </div>
-            <div className="status-dot">Online</div>
+
+            <div className="tabs">
+              {TABS.map(t => (
+                <button key={t.id} className={`tab ${tab === t.id ? "on" : ""}`} onClick={() => setTab(t.id)}>
+                  <span className="ti"><Icon name={t.icon} size={17} color={tab === t.id ? "#818cf8" : "#5a5a72"} /></span>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="content">
+              {tab === "chat"      && <ChatTab />}
+              {tab === "tools"     && <ToolsTab />}
+              {tab === "letters"   && <LettersTab />}
+              {tab === "award"     && <AwardTab />}
+              {tab === "resources" && <ResourcesTab />}
+            </div>
           </div>
         </div>
-
-        <div className="tabs">
-          {TABS.map(t => (
-            <button key={t.id} className={`tab ${tab === t.id ? "on" : ""}`} onClick={() => setTab(t.id)}>
-              <span className="ti"><Icon name={t.icon} size={17} color={tab === t.id ? "#818cf8" : "#5a5a72"} /></span>
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="content">
-          {tab === "chat"      && <ChatTab />}
-          {tab === "tools"     && <ToolsTab />}
-          {tab === "letters"   && <LettersTab />}
-          {tab === "award"     && <AwardTab />}
-          {tab === "resources" && <ResourcesTab />}
-        </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 }
