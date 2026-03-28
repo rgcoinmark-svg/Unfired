@@ -20,10 +20,10 @@ All employees are entitled to a minimum rate of pay. Employers must provide pays
 Workplace bullying is repeated, unreasonable behaviour directed at a worker creating a risk to health and safety. A single incident does not constitute bullying. Reasonable management action is NOT bullying. Workers can apply to the Fair Work Commission for an order to stop bullying.
 
 --- NOTICE OF TERMINATION ---
-NES minimum notice: less than 1 year = 1 week; 1–3 years = 2 weeks; 3–5 years = 3 weeks; over 5 years = 4 weeks. Over 45 years old with 2+ years service = extra 1 week. Serious misconduct can result in summary dismissal with no notice.
+NES minimum notice: less than 1 year = 1 week; 1-3 years = 2 weeks; 3-5 years = 3 weeks; over 5 years = 4 weeks. Over 45 years old with 2+ years service = extra 1 week. Serious misconduct can result in summary dismissal with no notice.
 
 --- REDUNDANCY ---
-Genuine redundancy: employer no longer requires the job to be done. NES redundancy pay: 1–2 years = 4 weeks; 2–3 years = 6 weeks; 3–4 years = 7 weeks; 4–5 years = 8 weeks; 5–6 years = 10 weeks; 6–7 years = 11 weeks; 7–8 years = 13 weeks; 8–9 years = 14 weeks; 9–10 years = 16 weeks; 10+ years = 12 weeks. Small business (under 15 employees) exempt.
+Genuine redundancy: employer no longer requires the job to be done. NES redundancy pay: 1-2 years = 4 weeks; 2-3 years = 6 weeks; 3-4 years = 7 weeks; 4-5 years = 8 weeks; 5-6 years = 10 weeks; 6-7 years = 11 weeks; 7-8 years = 13 weeks; 8-9 years = 14 weeks; 9-10 years = 16 weeks; 10+ years = 12 weeks. Small business (under 15 employees) exempt.
 
 --- DISCRIMINATION ---
 Protected attributes include: race, sex, pregnancy, age, disability, carer status, sexual orientation, gender identity, criminal record. Complaints to Australian Human Rights Commission (federal) or Victorian EOHRCC (state). Time limits generally 12 months.
@@ -66,9 +66,31 @@ const LETTER_PROMPT = `You are an Australian employment law document specialist.
 
 const AWARD_PROMPT = `You are an Australian Modern Award specialist.
 - Name the most likely Modern Award for the industry/role
-- List minimum rate, casual loading, key penalty rates, overtime rules
+- List the ACTUAL current minimum hourly rate in AUD dollars
+- List casual loading percentage and the casual hourly rate
+- List key penalty rates (Saturday, Sunday, public holiday) as multipliers AND dollar amounts
+- List overtime rates
 - Mention the Fair Work Ombudsman Pay Calculator for exact figures
 - Note if an Enterprise Agreement might apply`;
+
+const TRIAGE_PROMPT = `You are an Australian employment law triage specialist. The user will describe a workplace situation. You must:
+1. Classify what type of issue this is (choose from: Unfair Dismissal, General Protections/Adverse Action, Workplace Bullying, Sexual Harassment, Discrimination, Underpayment/Wage Theft, Redundancy Dispute, Contract Breach, WHS Violation, Other)
+2. Rate urgency: URGENT (has a deadline soon), IMPORTANT (should act soon), or MONITOR (gather evidence first)
+3. Name the exact body to complain to (Fair Work Commission, Fair Work Ombudsman, Australian Human Rights Commission, State EOHR Commission, SafeWork, ATO, or a lawyer)
+4. Give the specific form/application number if applicable (e.g., Form F2 for unfair dismissal)
+5. State any time limits that apply
+6. List 3-5 immediate actions to take
+
+Format your response with clear headings for each section. Be direct and practical.`;
+
+const EVIDENCE_PROMPT = `You are an Australian employment law evidence specialist. The user will describe their workplace issue. Generate a comprehensive evidence checklist specific to their situation. For each item:
+- Name the evidence type
+- Explain WHY it matters for their specific claim
+- Give practical tips on how to obtain/preserve it
+- Note if it has an expiry or may be deleted
+
+Group evidence into categories: Documents, Communications, Witnesses, Financial Records, Medical/Health, Photos/Video, Official Records.
+End with "Priority Actions" - the 3 most time-sensitive evidence items to secure immediately.`;
 
 // ─── DATA ─────────────────────────────────────────────────────────────────────
 
@@ -113,6 +135,41 @@ const RESOURCES = [
   { name: "ACTU - Unions",          url: "https://www.actu.org.au",              desc: "Find your union",               icon: "hand",     tag: "Support", color: "#ea580c"  },
 ];
 
+const TOOLS_LIST = [
+  { id: "payslip",     label: "Payslip Auditor",      desc: "Check if you're being underpaid",     icon: "search-dollar", color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
+  { id: "eligibility", label: "Dismissal Checker",    desc: "Can you lodge an unfair dismissal claim?", icon: "check-circle", color: "#10b981", bg: "rgba(16,185,129,0.1)" },
+  { id: "notice",      label: "Notice & Redundancy",  desc: "Calculate your exact entitlements",   icon: "calculator",    color: "#6366f1", bg: "rgba(99,102,241,0.1)" },
+  { id: "triage",      label: "What Just Happened?",  desc: "Classify your situation & next steps", icon: "compass",      color: "#ec4899", bg: "rgba(236,72,153,0.1)" },
+  { id: "deadline",    label: "Deadline Tracker",     desc: "Don't miss critical time limits",     icon: "clock",         color: "#ef4444", bg: "rgba(239,68,68,0.1)" },
+  { id: "evidence",    label: "Evidence Checklist",   desc: "What to collect before it disappears", icon: "clipboard",    color: "#8b5cf6", bg: "rgba(139,92,246,0.1)" },
+];
+
+// Penalty rate data for payslip auditor
+const PENALTY_RATES = {
+  "General Retail Industry Award": { base: 25.23, casual: 1.25, sat: 1.25, sun: 1.5, pubHol: 2.5, ot1: 1.5, ot2: 2.0 },
+  "Hospitality Industry (General) Award": { base: 24.73, casual: 1.25, sat: 1.25, sun: 1.5, pubHol: 2.25, ot1: 1.5, ot2: 2.0 },
+  "Building and Construction General On-site Award": { base: 29.16, casual: 1.25, sat: 1.5, sun: 2.0, pubHol: 2.5, ot1: 1.5, ot2: 2.0 },
+  "Health Professionals and Support Services Award": { base: 26.68, casual: 1.25, sat: 1.25, sun: 1.5, pubHol: 2.5, ot1: 1.5, ot2: 2.0 },
+  "Educational Services (Teachers) Award": { base: 29.86, casual: 1.25, sat: 1.5, sun: 2.0, pubHol: 2.5, ot1: 1.5, ot2: 2.0 },
+  "Manufacturing and Associated Industries Award": { base: 25.72, casual: 1.25, sat: 1.5, sun: 2.0, pubHol: 2.5, ot1: 1.5, ot2: 2.0 },
+  "Road Transport and Distribution Award": { base: 26.30, casual: 1.25, sat: 1.5, sun: 2.0, pubHol: 2.5, ot1: 1.5, ot2: 2.0 },
+  "Professional Employees Award": { base: 27.42, casual: 1.25, sat: 1.5, sun: 2.0, pubHol: 2.5, ot1: 1.5, ot2: 2.0 },
+  "National Minimum Wage": { base: 24.10, casual: 1.25, sat: 1.25, sun: 1.5, pubHol: 2.5, ot1: 1.5, ot2: 2.0 },
+};
+
+// Deadline data
+const DEADLINE_TYPES = [
+  { id: "unfair_dismissal", label: "Unfair Dismissal Claim", days: 21, body: "Fair Work Commission", form: "Form F2", desc: "From date dismissal took effect", color: "#ef4444" },
+  { id: "general_protections", label: "General Protections (Dismissed)", days: 21, body: "Fair Work Commission", form: "Form F8", desc: "From date of dismissal", color: "#f59e0b" },
+  { id: "bullying", label: "Bullying Stop Order", days: null, body: "Fair Work Commission", form: "Form F72", desc: "No strict time limit, but act promptly", color: "#8b5cf6" },
+  { id: "discrimination_federal", label: "Discrimination (Federal)", days: 365, body: "Australian Human Rights Commission", form: "Online complaint", desc: "From date of discriminatory act", color: "#ec4899" },
+  { id: "discrimination_vic", label: "Discrimination (Victoria)", days: 365, body: "Victorian EOHR Commission", form: "Online complaint", desc: "From date of discriminatory act", color: "#ec4899" },
+  { id: "underpayment", label: "Underpayment Claim", days: 2190, body: "Fair Work Ombudsman or Federal Court", form: "FWO online complaint", desc: "6 years from when wages were due", color: "#f59e0b" },
+  { id: "sexual_harassment", label: "Sexual Harassment (Stop Order)", days: null, body: "Fair Work Commission", form: "Form F75", desc: "No strict time limit for stop orders", color: "#ef4444" },
+  { id: "unpaid_super", label: "Unpaid Superannuation", days: null, body: "Australian Taxation Office", form: "ATO online report", desc: "Report anytime, but act within financial year if possible", color: "#6366f1" },
+  { id: "workers_comp", label: "Workers Compensation", days: 30, body: "State WorkCover authority", form: "Worker's injury claim form", desc: "30 days from injury (varies by state)", color: "#10b981" },
+];
+
 // ─── SVG ICON COMPONENT ──────────────────────────────────────────────────────
 
 function Icon({ name, size = 20, color = "currentColor", strokeWidth = 1.8 }) {
@@ -132,6 +189,7 @@ function Icon({ name, size = 20, color = "currentColor", strokeWidth = 1.8 }) {
     "calendar":     <><rect x="3" y="4" width="18" height="18" rx="2" ry="2" {...p} /><line x1="16" y1="2" x2="16" y2="6" {...p} /><line x1="8" y1="2" x2="8" y2="6" {...p} /><line x1="3" y1="10" x2="21" y2="10" {...p} /></>,
     "copy":         <><rect x="9" y="9" width="13" height="13" rx="2" ry="2" {...p} /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" {...p} /></>,
     "check":        <polyline points="20 6 9 17 4 12" {...p} />,
+    "check-circle": <><path d="M22 11.08V12a10 10 0 11-5.93-9.14" {...p} /><polyline points="22 4 12 14.01 9 11.01" {...p} /></>,
     "shopping-bag": <><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" {...p} /><line x1="3" y1="6" x2="21" y2="6" {...p} /><path d="M16 10a4 4 0 01-8 0" {...p} /></>,
     "coffee":       <><path d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z" {...p} /><line x1="6" y1="1" x2="6" y2="4" {...p} /><line x1="10" y1="1" x2="10" y2="4" {...p} /><line x1="14" y1="1" x2="14" y2="4" {...p} /></>,
     "hard-hat":     <><path d="M2 18v-1a10 10 0 0120 0v1" {...p} /><path d="M2 18h20" {...p} /><path d="M12 2a7 7 0 017 7v2H5V9a7 7 0 017-7z" {...p} /></>,
@@ -148,10 +206,21 @@ function Icon({ name, size = 20, color = "currentColor", strokeWidth = 1.8 }) {
     "users":        <><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" {...p} /><circle cx="9" cy="7" r="4" {...p} /><path d="M23 21v-2a4 4 0 00-3-3.87" {...p} /><path d="M16 3.13a4 4 0 010 7.75" {...p} /></>,
     "hand":         <><path d="M18 11V6a2 2 0 00-4 0M14 10V4a2 2 0 00-4 0M10 9.5V5a2 2 0 00-4 0v9" {...p} /><path d="M18 11a2 2 0 014 0v3a8 8 0 01-8 8h-2c-2.5 0-3.78-.86-5.64-2.64L3.93 16.93a2 2 0 012.83-2.83L10 17.5" {...p} /></>,
     "arrow-right":  <><line x1="5" y1="12" x2="19" y2="12" {...p} /><polyline points="12 5 19 12 12 19" {...p} /></>,
+    "arrow-left":   <><line x1="19" y1="12" x2="5" y2="12" {...p} /><polyline points="12 19 5 12 12 5" {...p} /></>,
     "external":     <><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" {...p} /><polyline points="15 3 21 3 21 9" {...p} /><line x1="10" y1="14" x2="21" y2="3" {...p} /></>,
     "info":         <><circle cx="12" cy="12" r="10" {...p} /><line x1="12" y1="16" x2="12" y2="12" {...p} /><line x1="12" y1="8" x2="12.01" y2="8" {...p} /></>,
     "alert-tri":    <><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" {...p} /><line x1="12" y1="9" x2="12" y2="13" {...p} /><line x1="12" y1="17" x2="12.01" y2="17" {...p} /></>,
     "sparkles":     <><path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8L12 2z" {...p} /></>,
+    "search-dollar":<><circle cx="11" cy="11" r="8" {...p} /><line x1="21" y1="21" x2="16.65" y2="16.65" {...p} /><path d="M11 8v6M13 9.5h-2.5a1.5 1.5 0 000 3h1a1.5 1.5 0 010 3H9" {...p} /></>,
+    "compass":      <><circle cx="12" cy="12" r="10" {...p} /><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" {...p} /></>,
+    "clipboard":    <><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2" {...p} /><rect x="8" y="2" width="8" height="4" rx="1" ry="1" {...p} /></>,
+    "grid":         <><rect x="3" y="3" width="7" height="7" {...p} /><rect x="14" y="3" width="7" height="7" {...p} /><rect x="14" y="14" width="7" height="7" {...p} /><rect x="3" y="14" width="7" height="7" {...p} /></>,
+    "x":            <><line x1="18" y1="6" x2="6" y2="18" {...p} /><line x1="6" y1="6" x2="18" y2="18" {...p} /></>,
+    "chevron-down": <polyline points="6 9 12 15 18 9" {...p} />,
+    "minus":        <line x1="5" y1="12" x2="19" y2="12" {...p} />,
+    "plus":         <><line x1="12" y1="5" x2="12" y2="19" {...p} /><line x1="5" y1="12" x2="19" y2="12" {...p} /></>,
+    "target":       <><circle cx="12" cy="12" r="10" {...p} /><circle cx="12" cy="12" r="6" {...p} /><circle cx="12" cy="12" r="2" {...p} /></>,
+    "zap":          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" {...p} />,
   };
   return <svg viewBox="0 0 24 24" style={s}>{paths[name] || paths["info"]}</svg>;
 }
@@ -175,6 +244,7 @@ const CSS = `
     --teal-border: rgba(45,212,191,0.2);
     --amber:     #fbbf24;
     --rose:      #fb7185;
+    --green:     #10b981;
     --text:      #f1f1f4;
     --text-2:    #a1a1b5;
     --text-3:    #5a5a72;
@@ -223,10 +293,6 @@ const CSS = `
     0%, 100% { opacity: 0.3; transform: scale(0.8); }
     50%      { opacity: 1; transform: scale(1); }
   }
-  @keyframes shimmer {
-    0%   { background-position: -200% center; }
-    100% { background-position: 200% center; }
-  }
   @keyframes glow-pulse {
     0%, 100% { box-shadow: 0 0 20px rgba(99,102,241,0.1); }
     50%      { box-shadow: 0 0 40px rgba(99,102,241,0.25); }
@@ -235,17 +301,20 @@ const CSS = `
     from { transform: rotate(0deg); }
     to   { transform: rotate(360deg); }
   }
-  @keyframes gradient-shift {
-    0%   { background-position: 0% 50%; }
-    50%  { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }
   @keyframes float {
     0%, 100% { transform: translateY(0); }
     50%      { transform: translateY(-6px); }
   }
+  @keyframes count-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+    100% { transform: scale(1); }
+  }
+  @keyframes urgent-glow {
+    0%, 100% { box-shadow: 0 0 8px rgba(239,68,68,0.2); }
+    50%      { box-shadow: 0 0 20px rgba(239,68,68,0.4); }
+  }
 
-  /* ── SHELL ── */
   .shell {
     width: 100%; max-width: 480px; height: 92vh; max-height: 860px;
     background: var(--surface);
@@ -263,7 +332,6 @@ const CSS = `
     pointer-events: none; z-index: 0;
   }
 
-  /* ── HEADER ── */
   .header {
     padding: 16px 18px 14px;
     background: transparent;
@@ -279,10 +347,8 @@ const CSS = `
     background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
     display: flex; align-items: center; justify-content: center;
     box-shadow: 0 4px 16px rgba(99,102,241,0.35), inset 0 1px 0 rgba(255,255,255,0.15);
-    position: relative;
     animation: glow-pulse 4s ease-in-out infinite;
   }
-  .logo svg { filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3)); }
 
   .app-name {
     font-size: 19px; font-weight: 800;
@@ -310,7 +376,6 @@ const CSS = `
     animation: breathe 2s ease-in-out infinite;
   }
 
-  /* ── TABS ── */
   .tabs {
     display: flex;
     background: var(--surface);
@@ -325,13 +390,13 @@ const CSS = `
     flex: 1; padding: 10px 4px 8px; border: none;
     background: transparent; border-radius: var(--radius-xs);
     color: var(--text-3); cursor: pointer;
-    font-size: 10px; font-weight: 600; letter-spacing: 0.3px;
+    font-size: 9px; font-weight: 600; letter-spacing: 0.3px;
     text-transform: uppercase; transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
     display: flex; flex-direction: column; align-items: center; gap: 4px;
     position: relative;
   }
   .tab .ti {
-    width: 34px; height: 34px; border-radius: 10px;
+    width: 32px; height: 32px; border-radius: 10px;
     display: flex; align-items: center; justify-content: center;
     transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
   }
@@ -351,10 +416,9 @@ const CSS = `
     box-shadow: 0 0 8px rgba(99,102,241,0.5);
   }
 
-  /* ── CONTENT ── */
   .content { flex: 1; overflow: hidden; display: flex; flex-direction: column; position: relative; z-index: 1; }
 
-  /* ── CHAT ── */
+  /* CHAT */
   .chips {
     padding: 14px 16px 6px;
     display: flex; flex-wrap: wrap; gap: 6px; flex-shrink: 0;
@@ -381,7 +445,6 @@ const CSS = `
     flex: 1; overflow-y: auto; padding: 14px 16px;
     display: flex; flex-direction: column; gap: 14px;
   }
-
   .mrow { display: flex; animation: slideUp 0.3s cubic-bezier(0.16,1,0.3,1) both; }
   .mrow.u { justify-content: flex-end; }
 
@@ -392,7 +455,6 @@ const CSS = `
     margin-right: 10px; margin-top: 2px;
     box-shadow: 0 2px 8px rgba(99,102,241,0.3);
   }
-
   .bub {
     max-width: 80%; padding: 12px 15px;
     font-size: 13.5px; line-height: 1.7; white-space: pre-wrap;
@@ -407,7 +469,6 @@ const CSS = `
     border-radius: 18px 4px 18px 18px; color: white; font-weight: 500;
     box-shadow: 0 4px 20px rgba(99,102,241,0.35);
   }
-
   .typing-wrap {
     display: flex; align-items: center; gap: 6px; padding: 8px 4px;
   }
@@ -449,19 +510,15 @@ const CSS = `
   .sbtn.on:hover { transform: scale(1.05); box-shadow: 0 6px 24px rgba(99,102,241,0.5); }
   .sbtn.on:active { transform: scale(0.95); }
   .sbtn.off { background: var(--surface3); color: var(--text-3); cursor: default; }
-  .sbtn.loading {
-    background: var(--surface3); color: var(--accent-2); cursor: default;
-  }
+  .sbtn.loading { background: var(--surface3); color: var(--accent-2); cursor: default; }
   .sbtn.loading svg { animation: spin 1s linear infinite; }
 
-  /* ── PANEL ── */
+  /* PANEL */
   .panel { flex: 1; overflow-y: auto; padding: 18px 16px; display: flex; flex-direction: column; gap: 16px; }
-
   .slabel {
     font-size: 10px; font-weight: 700; letter-spacing: 1.2px;
     text-transform: uppercase; color: var(--text-3); margin-bottom: 8px;
   }
-
   .info-card {
     background: var(--accent-bg); border: 1px solid var(--accent-border);
     border-radius: var(--radius); padding: 16px;
@@ -488,8 +545,7 @@ const CSS = `
   .ichip:hover { border-color: var(--accent-border); color: var(--accent-2); background: var(--accent-bg); }
   .ichip:hover svg { opacity: 0.8; color: var(--accent-2); }
   .ichip.sel {
-    background: var(--accent-bg); border-color: var(--accent);
-    color: var(--accent-2);
+    background: var(--accent-bg); border-color: var(--accent); color: var(--accent-2);
     box-shadow: 0 0 0 3px rgba(99,102,241,0.1), 0 4px 12px rgba(99,102,241,0.2);
   }
   .ichip.sel svg { opacity: 1; color: var(--accent-2); }
@@ -527,10 +583,7 @@ const CSS = `
   }
   .pbtn:active:not(:disabled) { transform: translateY(0); }
   .pbtn:disabled { opacity: 0.35; cursor: default; transform: none; box-shadow: none; }
-  .pbtn.loading-btn {
-    background: var(--surface3); color: var(--text-2);
-    box-shadow: none;
-  }
+  .pbtn.loading-btn { background: var(--surface3); color: var(--text-2); box-shadow: none; }
   .pbtn.loading-btn svg { animation: spin 1s linear infinite; }
 
   .rbox {
@@ -538,8 +591,7 @@ const CSS = `
     border-radius: var(--radius); padding: 18px;
     font-size: 13px; line-height: 1.8; color: var(--text);
     white-space: pre-wrap; animation: slideUp 0.35s cubic-bezier(0.16,1,0.3,1);
-    font-weight: 400;
-    position: relative;
+    font-weight: 400; position: relative;
   }
   .rbox::before {
     content: '';
@@ -558,7 +610,6 @@ const CSS = `
   .cpybtn:hover { background: var(--accent-bg); color: var(--accent-2); border-color: var(--accent-border); }
   .cpybtn.copied { background: rgba(45,212,191,0.1); color: var(--teal); border-color: var(--teal-border); }
 
-  /* ── LETTER GRID ── */
   .lgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .lcard {
     background: var(--surface2); border: 1.5px solid var(--border-2);
@@ -575,8 +626,7 @@ const CSS = `
   .lcard:hover { border-color: var(--border-2); transform: translateY(-2px); box-shadow: var(--shadow); }
   .lcard:hover::before { opacity: 1; }
   .lcard.sel {
-    border-color: var(--accent-border);
-    background: var(--accent-bg);
+    border-color: var(--accent-border); background: var(--accent-bg);
     box-shadow: 0 0 0 3px rgba(99,102,241,0.08);
   }
   .lcard.sel::before { opacity: 1; }
@@ -589,7 +639,6 @@ const CSS = `
   .lcard.sel .lcl { color: var(--accent-2); }
   .lcd { font-size: 11px; color: var(--text-3); font-weight: 500; }
 
-  /* ── RESOURCES ── */
   .rcard {
     display: flex; align-items: center; gap: 14px; padding: 14px 16px;
     background: var(--surface2); border: 1px solid var(--border-2);
@@ -605,8 +654,7 @@ const CSS = `
   }
   .rcard:hover {
     border-color: var(--border-2); background: var(--surface3);
-    transform: translateX(4px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    transform: translateX(4px); box-shadow: 0 8px 24px rgba(0,0,0,0.3);
   }
   .rcard:hover::before { opacity: 1; }
   .ricon {
@@ -615,7 +663,6 @@ const CSS = `
     flex-shrink: 0;
   }
   .rname { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 2px; display: flex; align-items: center; gap: 8px; }
-  .rcard:hover .rname { color: var(--text); }
   .rdesc { font-size: 11.5px; color: var(--text-3); font-weight: 500; }
   .rtag {
     font-size: 9px; font-weight: 700; letter-spacing: 0.4px;
@@ -623,10 +670,7 @@ const CSS = `
     background: var(--accent-bg); color: var(--accent-2);
     border: 1px solid var(--accent-border); text-transform: uppercase;
   }
-  .rarr {
-    margin-left: auto; color: var(--text-3); flex-shrink: 0;
-    transition: all 0.25s; opacity: 0.5;
-  }
+  .rarr { margin-left: auto; color: var(--text-3); flex-shrink: 0; transition: all 0.25s; opacity: 0.5; }
   .rcard:hover .rarr { transform: translate(2px, -2px); opacity: 1; color: var(--accent-2); }
 
   .disclaimer {
@@ -636,9 +680,7 @@ const CSS = `
     display: flex; gap: 10px; align-items: flex-start;
   }
   .disclaimer svg { flex-shrink: 0; margin-top: 1px; }
-  .disclaimer strong { font-weight: 700; }
 
-  /* ── WELCOME ── */
   .welcome {
     display: flex; flex-direction: column; align-items: center;
     text-align: center; padding: 24px 20px 16px; gap: 4px;
@@ -651,24 +693,194 @@ const CSS = `
     margin-bottom: 10px;
     animation: float 3s ease-in-out infinite;
   }
-  .welcome h3 {
-    font-size: 16px; font-weight: 700; color: var(--text);
-    margin-bottom: 4px;
+  .welcome h3 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .welcome p { font-size: 12.5px; color: var(--text-3); line-height: 1.5; max-width: 300px; }
+
+  /* TOOLS */
+  .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tool-card {
+    background: var(--surface2); border: 1.5px solid var(--border-2);
+    border-radius: var(--radius); padding: 18px 14px;
+    cursor: pointer; transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
+    text-align: left; position: relative; overflow: hidden;
   }
-  .welcome p {
-    font-size: 12.5px; color: var(--text-3); line-height: 1.5;
-    max-width: 300px;
+  .tool-card::after {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--tool-color, var(--accent));
+    opacity: 0; transition: opacity 0.25s;
+  }
+  .tool-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.3); border-color: var(--border-2); }
+  .tool-card:hover::after { opacity: 1; }
+  .tool-card:active { transform: translateY(0); }
+  .tool-icon {
+    width: 40px; height: 40px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 12px;
+  }
+  .tool-label { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+  .tool-desc { font-size: 11px; color: var(--text-3); font-weight: 500; line-height: 1.4; }
+
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: none; border: none; color: var(--text-3);
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    padding: 0; margin-bottom: 12px; transition: color 0.2s;
+    font-family: 'Inter', sans-serif;
+  }
+  .back-btn:hover { color: var(--accent-2); }
+
+  /* FORM ELEMENTS */
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-label {
+    font-size: 12px; font-weight: 600; color: var(--text-2);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .form-hint { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+
+  .select-wrap {
+    position: relative;
+  }
+  .select-wrap select {
+    width: 100%; background: var(--surface2); border: 1.5px solid var(--border-2);
+    border-radius: var(--radius-xs); padding: 12px 36px 12px 16px;
+    color: var(--text); font-size: 13.5px; outline: none;
+    transition: all 0.25s; font-weight: 400;
+    -webkit-appearance: none; -moz-appearance: none; appearance: none;
+    cursor: pointer;
+  }
+  .select-wrap select:focus { border-color: var(--accent-border); box-shadow: 0 0 0 3px rgba(99,102,241,0.08); }
+  .select-wrap::after {
+    content: '';
+    position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+    width: 0; height: 0;
+    border-left: 5px solid transparent; border-right: 5px solid transparent;
+    border-top: 5px solid var(--text-3);
+    pointer-events: none;
+  }
+  .select-wrap select option { background: var(--surface2); color: var(--text); }
+
+  /* RESULT CARDS */
+  .result-card {
+    background: var(--surface2); border: 1px solid var(--border-2);
+    border-radius: var(--radius); overflow: hidden;
+    animation: slideUp 0.35s cubic-bezier(0.16,1,0.3,1);
+  }
+  .result-header {
+    padding: 14px 16px; display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .result-header-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .result-header h4 { font-size: 14px; font-weight: 700; color: var(--text); }
+  .result-header .tag {
+    margin-left: auto; font-size: 10px; font-weight: 700;
+    padding: 3px 10px; border-radius: 20px; text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .result-body { padding: 16px; }
+  .result-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+  }
+  .result-row:last-child { border-bottom: none; }
+  .result-row .label { font-size: 12.5px; color: var(--text-2); font-weight: 500; }
+  .result-row .value { font-size: 13.5px; color: var(--text); font-weight: 700; text-align: right; }
+  .result-row .value.green { color: var(--green); }
+  .result-row .value.red { color: #ef4444; }
+  .result-row .value.amber { color: var(--amber); }
+
+  .result-total {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 16px; background: var(--accent-bg);
+    border-top: 1px solid var(--accent-border);
+  }
+  .result-total .label { font-size: 13px; font-weight: 700; color: var(--accent-2); }
+  .result-total .value { font-size: 18px; font-weight: 800; color: var(--text); }
+
+  /* WIZARD */
+  .wizard-step {
+    animation: slideUp 0.3s cubic-bezier(0.16,1,0.3,1);
+  }
+  .wizard-progress {
+    display: flex; gap: 4px; margin-bottom: 18px;
+  }
+  .wizard-dot {
+    flex: 1; height: 3px; border-radius: 3px;
+    background: var(--border-2); transition: all 0.3s;
+  }
+  .wizard-dot.active { background: var(--accent); }
+  .wizard-dot.done { background: var(--green); }
+
+  .option-grid { display: flex; flex-direction: column; gap: 8px; }
+  .option-btn {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--surface2); border: 1.5px solid var(--border-2);
+    border-radius: var(--radius-sm); padding: 14px 16px;
+    cursor: pointer; transition: all 0.2s; text-align: left;
+    font-family: 'Inter', sans-serif;
+  }
+  .option-btn:hover { border-color: var(--accent-border); background: var(--accent-bg); }
+  .option-btn.sel { border-color: var(--accent); background: var(--accent-bg); box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
+  .option-btn .opt-label { font-size: 13px; font-weight: 600; color: var(--text); }
+  .option-btn .opt-desc { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+  .option-btn .opt-radio {
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 2px solid var(--border-2); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .option-btn.sel .opt-radio { border-color: var(--accent); }
+  .option-btn.sel .opt-radio::after {
+    content: ''; width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
   }
 
-  /* ── EMPTY STATE ── */
-  .empty-state {
-    flex: 1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    padding: 40px 20px; text-align: center; gap: 8px;
-    color: var(--text-3);
+  /* DEADLINE */
+  .deadline-card {
+    background: var(--surface2); border: 1px solid var(--border-2);
+    border-radius: var(--radius); padding: 16px;
+    transition: all 0.2s; position: relative; overflow: hidden;
   }
-  .empty-state svg { opacity: 0.3; margin-bottom: 8px; }
-  .empty-state p { font-size: 13px; }
+  .deadline-card.urgent { border-color: rgba(239,68,68,0.3); animation: urgent-glow 2s ease-in-out infinite; }
+  .deadline-card.warning { border-color: rgba(251,191,36,0.3); }
+  .deadline-card .dl-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .deadline-card .dl-type { font-size: 13px; font-weight: 700; color: var(--text); }
+  .deadline-card .dl-body { font-size: 11px; color: var(--text-3); margin-bottom: 10px; font-weight: 500; }
+  .deadline-card .dl-countdown {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 14px; border-radius: var(--radius-xs);
+    background: var(--surface3);
+  }
+  .dl-countdown .num { font-size: 22px; font-weight: 800; animation: count-pulse 2s ease infinite; }
+  .dl-countdown .unit { font-size: 11px; color: var(--text-3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .dl-countdown .sep { color: var(--text-3); font-size: 18px; font-weight: 300; }
+  .dl-meta { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .dl-tag {
+    font-size: 10px; font-weight: 600; padding: 3px 8px;
+    border-radius: 6px; background: var(--accent-bg);
+    color: var(--accent-2); border: 1px solid var(--accent-border);
+  }
+
+  /* CHECKLIST */
+  .checklist-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 12px 0; border-bottom: 1px solid var(--border);
+  }
+  .checklist-item:last-child { border-bottom: none; }
+  .check-box {
+    width: 20px; height: 20px; border-radius: 6px;
+    border: 2px solid var(--border-2); flex-shrink: 0;
+    cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 1px;
+  }
+  .check-box.checked { background: var(--green); border-color: var(--green); }
+  .check-text { font-size: 13px; color: var(--text); line-height: 1.5; }
+  .check-text.done { text-decoration: line-through; color: var(--text-3); }
 `;
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
@@ -682,10 +894,18 @@ async function callClaude(system, messages) {
       "anthropic-version": "2023-06-01",
       "anthropic-dangerous-direct-browser-access": "true",
     },
-    body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, system, messages }),
+    body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1500, system, messages }),
   });
   const data = await res.json();
   return data.content?.map(b => b.text || "").join("") || "Sorry, no response received.";
+}
+
+function fmtCurrency(n) {
+  return "$" + n.toFixed(2);
+}
+
+function daysBetween(d1, d2) {
+  return Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24));
 }
 
 // ─── CHAT TAB ─────────────────────────────────────────────────────────────────
@@ -733,8 +953,7 @@ function ChatTab() {
       <div className="chips" style={showWelcome ? {} : { paddingTop: 14 }}>
         {QUICK_QUESTIONS.map(({ q, icon }) => (
           <button key={q} className="chip" onClick={() => send(q)}>
-            <Icon name={icon} size={13} />
-            {q}
+            <Icon name={icon} size={13} />{q}
           </button>
         ))}
       </div>
@@ -743,18 +962,14 @@ function ChatTab() {
           <div key={i} className={`mrow ${m.role === "user" ? "u" : ""}`}
             style={{ animationDelay: `${Math.min(i * 0.05, 0.3)}s` }}>
             {m.role === "assistant" && (
-              <div className="av">
-                <Icon name="scale" size={16} color="white" />
-              </div>
+              <div className="av"><Icon name="scale" size={16} color="white" /></div>
             )}
             <div className={`bub ${m.role === "assistant" ? "ai" : "usr"}`}>{m.content}</div>
           </div>
         ))}
         {loading && (
           <div className="mrow" style={{ animation: "slideUp 0.3s ease both" }}>
-            <div className="av">
-              <Icon name="scale" size={16} color="white" />
-            </div>
+            <div className="av"><Icon name="scale" size={16} color="white" /></div>
             <div className="bub ai">
               <div className="typing-wrap">
                 <div className="dot" /><div className="dot" /><div className="dot" />
@@ -769,14 +984,695 @@ function ChatTab() {
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
           placeholder="Ask about your workplace rights..." />
-        <button
-          className={`sbtn ${loading ? "loading" : input.trim() ? "on" : "off"}`}
+        <button className={`sbtn ${loading ? "loading" : input.trim() ? "on" : "off"}`}
           onClick={() => send()} disabled={!input.trim() || loading}>
-          {loading
-            ? <Icon name="loader" size={18} color="#818cf8" />
-            : <Icon name="send" size={18} color={input.trim() ? "white" : "#5a5a72"} />
-          }
+          {loading ? <Icon name="loader" size={18} color="#818cf8" /> : <Icon name="send" size={18} color={input.trim() ? "white" : "#5a5a72"} />}
         </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── PAYSLIP AUDITOR ──────────────────────────────────────────────────────────
+
+function PayslipAuditor({ onBack }) {
+  const [award, setAward] = useState("");
+  const [isCasual, setIsCasual] = useState(false);
+  const [hourlyPaid, setHourlyPaid] = useState("");
+  const [normalHrs, setNormalHrs] = useState("");
+  const [satHrs, setSatHrs] = useState("");
+  const [sunHrs, setSunHrs] = useState("");
+  const [pubHolHrs, setPubHolHrs] = useState("");
+  const [otHrs, setOtHrs] = useState("");
+  const [result, setResult] = useState(null);
+
+  function audit() {
+    const rates = PENALTY_RATES[award];
+    if (!rates) return;
+    const paid = parseFloat(hourlyPaid) || 0;
+    const normal = parseFloat(normalHrs) || 0;
+    const sat = parseFloat(satHrs) || 0;
+    const sun = parseFloat(sunHrs) || 0;
+    const pub = parseFloat(pubHolHrs) || 0;
+    const ot = parseFloat(otHrs) || 0;
+
+    const baseRate = isCasual ? rates.base * rates.casual : rates.base;
+    const shouldNormal = baseRate * normal;
+    const shouldSat = baseRate * rates.sat * sat;
+    const shouldSun = baseRate * rates.sun * sun;
+    const shouldPub = baseRate * rates.pubHol * pub;
+    const shouldOt = baseRate * rates.ot1 * ot;
+    const shouldTotal = shouldNormal + shouldSat + shouldSun + shouldPub + shouldOt;
+
+    const totalHrs = normal + sat + sun + pub + ot;
+    const paidTotal = paid * totalHrs;
+    const diff = shouldTotal - paidTotal;
+
+    setResult({
+      baseRate, paid, totalHrs,
+      shouldNormal, shouldSat, shouldSun, shouldPub, shouldOt,
+      shouldTotal, paidTotal, diff,
+      satRate: baseRate * rates.sat,
+      sunRate: baseRate * rates.sun,
+      pubRate: baseRate * rates.pubHol,
+      otRate: baseRate * rates.ot1,
+    });
+  }
+
+  return (
+    <div className="panel">
+      <button className="back-btn" onClick={onBack}>
+        <Icon name="arrow-left" size={16} /> Back to Tools
+      </button>
+      <div className="info-card" style={{ background: "rgba(245,158,11,0.08)", borderColor: "rgba(245,158,11,0.2)" }}>
+        <div className="ic-title" style={{ color: "#fbbf24" }}>
+          <Icon name="search-dollar" size={16} color="#fbbf24" /> Payslip Auditor
+        </div>
+        <div className="ic-body">Enter your pay details and we'll calculate what you should have been paid based on your Modern Award.</div>
+      </div>
+
+      <div className="form-group">
+        <div className="form-label">Your Award</div>
+        <div className="select-wrap">
+          <select value={award} onChange={e => setAward(e.target.value)}>
+            <option value="">Select your award...</option>
+            {Object.keys(PENALTY_RATES).map(a => <option key={a} value={a}>{a}</option>)}
+          </select>
+        </div>
+      </div>
+
+      <div className="form-group">
+        <button className={`option-btn ${isCasual ? "sel" : ""}`} onClick={() => setIsCasual(!isCasual)} style={{ padding: "10px 14px" }}>
+          <div className="opt-radio">{isCasual && <div style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--accent)" }} />}</div>
+          <div>
+            <div className="opt-label">I'm a casual employee</div>
+            <div className="opt-desc">25% loading applied to base rate</div>
+          </div>
+        </button>
+      </div>
+
+      <div className="form-group">
+        <div className="form-label">Hourly rate you're being paid</div>
+        <input className="tinput" type="number" step="0.01" value={hourlyPaid} onChange={e => setHourlyPaid(e.target.value)} placeholder="e.g. 23.50" />
+      </div>
+
+      <div className="form-row">
+        <div className="form-group">
+          <div className="form-label">Normal hours</div>
+          <input className="tinput" type="number" value={normalHrs} onChange={e => setNormalHrs(e.target.value)} placeholder="0" />
+        </div>
+        <div className="form-group">
+          <div className="form-label">Saturday hrs</div>
+          <input className="tinput" type="number" value={satHrs} onChange={e => setSatHrs(e.target.value)} placeholder="0" />
+        </div>
+      </div>
+      <div className="form-row">
+        <div className="form-group">
+          <div className="form-label">Sunday hrs</div>
+          <input className="tinput" type="number" value={sunHrs} onChange={e => setSunHrs(e.target.value)} placeholder="0" />
+        </div>
+        <div className="form-group">
+          <div className="form-label">Public holiday hrs</div>
+          <input className="tinput" type="number" value={pubHolHrs} onChange={e => setPubHolHrs(e.target.value)} placeholder="0" />
+        </div>
+      </div>
+      <div className="form-group">
+        <div className="form-label">Overtime hours</div>
+        <input className="tinput" type="number" value={otHrs} onChange={e => setOtHrs(e.target.value)} placeholder="0" />
+      </div>
+
+      <button className="pbtn" onClick={audit} disabled={!award || !hourlyPaid}>
+        Audit My Pay <Icon name="arrow-right" size={16} />
+      </button>
+
+      {result && (
+        <div className="result-card">
+          <div className="result-header">
+            <div className="result-header-icon" style={{ background: result.diff > 0 ? "rgba(239,68,68,0.1)" : "rgba(16,185,129,0.1)" }}>
+              <Icon name={result.diff > 0 ? "alert-tri" : "check-circle"} size={20} color={result.diff > 0 ? "#ef4444" : "#10b981"} />
+            </div>
+            <h4>{result.diff > 0 ? "Potential Underpayment" : "Pay Looks Correct"}</h4>
+            {result.diff > 0 && <span className="tag" style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.2)" }}>Underpaid</span>}
+          </div>
+          <div className="result-body">
+            <div className="result-row">
+              <span className="label">Minimum base rate {isCasual ? "(casual)" : ""}</span>
+              <span className="value">{fmtCurrency(result.baseRate)}/hr</span>
+            </div>
+            <div className="result-row">
+              <span className="label">You're being paid</span>
+              <span className={`value ${result.paid < result.baseRate ? "red" : ""}`}>{fmtCurrency(result.paid)}/hr</span>
+            </div>
+            {parseFloat(satHrs) > 0 && <div className="result-row"><span className="label">Saturday rate</span><span className="value">{fmtCurrency(result.satRate)}/hr</span></div>}
+            {parseFloat(sunHrs) > 0 && <div className="result-row"><span className="label">Sunday rate</span><span className="value">{fmtCurrency(result.sunRate)}/hr</span></div>}
+            {parseFloat(pubHolHrs) > 0 && <div className="result-row"><span className="label">Public holiday rate</span><span className="value">{fmtCurrency(result.pubRate)}/hr</span></div>}
+            {parseFloat(otHrs) > 0 && <div className="result-row"><span className="label">Overtime rate</span><span className="value">{fmtCurrency(result.otRate)}/hr</span></div>}
+            <div className="result-row">
+              <span className="label">You were paid (total)</span>
+              <span className="value">{fmtCurrency(result.paidTotal)}</span>
+            </div>
+            <div className="result-row">
+              <span className="label">You should have received</span>
+              <span className="value green">{fmtCurrency(result.shouldTotal)}</span>
+            </div>
+          </div>
+          {result.diff > 0 && (
+            <div className="result-total">
+              <span className="label">You may be owed</span>
+              <span className="value" style={{ color: "#ef4444" }}>{fmtCurrency(result.diff)}</span>
+            </div>
+          )}
+        </div>
+      )}
+      {result && result.diff > 0 && (
+        <div className="disclaimer">
+          <Icon name="info" size={16} color="#fbbf24" />
+          <div>These are minimum award rates. Your actual entitlements may differ based on your specific award classification, enterprise agreement, or contract. Report underpayments to the <strong>Fair Work Ombudsman</strong> at fairwork.gov.au</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── ELIGIBILITY CHECKER (WIZARD) ────────────────────────────────────────────
+
+function EligibilityChecker({ onBack }) {
+  const [step, setStep] = useState(0);
+  const [answers, setAnswers] = useState({});
+
+  const steps = [
+    { q: "How were you dismissed?", key: "dismissal_type", options: [
+      { value: "employer", label: "Employer terminated my employment", desc: "Your boss/company ended your employment" },
+      { value: "constructive", label: "I resigned due to employer conduct", desc: "You felt forced to resign (constructive dismissal)" },
+      { value: "fixed_term", label: "Fixed-term contract ended early", desc: "Contract was terminated before its end date" },
+      { value: "natural", label: "Contract ended naturally", desc: "Fixed-term contract ran its full course" },
+      { value: "training", label: "Training arrangement ended", desc: "Apprenticeship or traineeship completed" },
+    ]},
+    { q: "How long did you work there?", key: "service_length", options: [
+      { value: "under_6m", label: "Less than 6 months" },
+      { value: "6m_to_1y", label: "6 months to 1 year" },
+      { value: "over_1y", label: "More than 1 year" },
+    ]},
+    { q: "How many employees at the business?", key: "employer_size", options: [
+      { value: "small", label: "Under 15 employees", desc: "Small business" },
+      { value: "large", label: "15 or more employees", desc: "Not a small business" },
+    ]},
+    { q: "What's your annual income?", key: "income", options: [
+      { value: "under", label: "Under $175,000/year", desc: "Below the high income threshold" },
+      { value: "over_covered", label: "Over $175,000 but covered by an award", desc: "Award or enterprise agreement applies" },
+      { value: "over_not_covered", label: "Over $175,000, no award coverage", desc: "No modern award or enterprise agreement" },
+    ]},
+    { q: "When were you dismissed?", key: "timing", options: [
+      { value: "within_21", label: "Within the last 21 days" },
+      { value: "over_21", label: "More than 21 days ago" },
+    ]},
+  ];
+
+  function answer(value) {
+    const newAnswers = { ...answers, [steps[step].key]: value };
+    setAnswers(newAnswers);
+    if (step < steps.length - 1) {
+      setStep(step + 1);
+    }
+  }
+
+  function getResult() {
+    const a = answers;
+    const issues = [];
+    let eligible = true;
+
+    if (a.dismissal_type === "natural" || a.dismissal_type === "training") {
+      return { eligible: false, reason: "You have not been 'dismissed' under the Fair Work Act. Unfair dismissal claims require that your employment was terminated by the employer, or that you were forced to resign.", issues: [], actions: [] };
+    }
+    if (a.employer_size === "small" && (a.service_length === "under_6m" || a.service_length === "6m_to_1y")) {
+      issues.push("Small businesses require 1 year minimum service for unfair dismissal eligibility.");
+      if (a.service_length === "under_6m") eligible = false;
+      if (a.service_length === "6m_to_1y") eligible = false;
+    }
+    if (a.employer_size === "large" && a.service_length === "under_6m") {
+      issues.push("You need at least 6 months of service with a non-small business employer.");
+      eligible = false;
+    }
+    if (a.income === "over_not_covered") {
+      issues.push("You earn over the high income threshold and aren't covered by an award or enterprise agreement.");
+      eligible = false;
+    }
+    if (a.timing === "over_21") {
+      issues.push("The 21-day filing deadline has passed. You may apply for an extension, but this is granted only in exceptional circumstances.");
+    }
+
+    const actions = eligible
+      ? ["Lodge Form F2 with the Fair Work Commission immediately", "Gather evidence: termination letter, employment contract, payslips, any correspondence", "Consider seeking legal advice from a workplace lawyer or community legal centre"]
+      : ["Consider a General Protections claim (Form F8) if dismissal was for a prohibited reason", "Contact the Fair Work Ombudsman for advice on other options", "Seek free legal advice from a community legal centre"];
+
+    return {
+      eligible,
+      reason: eligible
+        ? "Based on your answers, you appear to meet the eligibility criteria for an unfair dismissal claim."
+        : "Based on your answers, you may not be eligible for an unfair dismissal claim. However, other remedies may be available.",
+      issues,
+      actions,
+    };
+  }
+
+  const allAnswered = Object.keys(answers).length === steps.length;
+  const result = allAnswered ? getResult() : null;
+
+  return (
+    <div className="panel">
+      <button className="back-btn" onClick={onBack}>
+        <Icon name="arrow-left" size={16} /> Back to Tools
+      </button>
+      <div className="info-card" style={{ background: "rgba(16,185,129,0.08)", borderColor: "rgba(16,185,129,0.2)" }}>
+        <div className="ic-title" style={{ color: "#10b981" }}>
+          <Icon name="check-circle" size={16} color="#10b981" /> Unfair Dismissal Eligibility
+        </div>
+        <div className="ic-body">Answer 5 quick questions to find out if you can lodge an unfair dismissal claim.</div>
+      </div>
+
+      <div className="wizard-progress">
+        {steps.map((_, i) => (
+          <div key={i} className={`wizard-dot ${i < step ? "done" : i === step ? "active" : ""}`} />
+        ))}
+      </div>
+
+      {!allAnswered && (
+        <div className="wizard-step" key={step}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text)", marginBottom: 14 }}>
+            {steps[step].q}
+          </div>
+          <div className="option-grid">
+            {steps[step].options.map(opt => (
+              <button key={opt.value} className={`option-btn ${answers[steps[step].key] === opt.value ? "sel" : ""}`}
+                onClick={() => answer(opt.value)}>
+                <div className="opt-radio" />
+                <div>
+                  <div className="opt-label">{opt.label}</div>
+                  {opt.desc && <div className="opt-desc">{opt.desc}</div>}
+                </div>
+              </button>
+            ))}
+          </div>
+          {step > 0 && (
+            <button className="back-btn" onClick={() => setStep(step - 1)} style={{ marginTop: 14 }}>
+              <Icon name="arrow-left" size={14} /> Previous question
+            </button>
+          )}
+        </div>
+      )}
+
+      {result && (
+        <div className="result-card">
+          <div className="result-header">
+            <div className="result-header-icon" style={{ background: result.eligible ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)" }}>
+              <Icon name={result.eligible ? "check-circle" : "x"} size={20} color={result.eligible ? "#10b981" : "#ef4444"} />
+            </div>
+            <h4>{result.eligible ? "Likely Eligible" : "May Not Be Eligible"}</h4>
+            <span className="tag" style={{
+              background: result.eligible ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)",
+              color: result.eligible ? "#10b981" : "#ef4444",
+              border: `1px solid ${result.eligible ? "rgba(16,185,129,0.2)" : "rgba(239,68,68,0.2)"}`,
+            }}>{result.eligible ? "Eligible" : "Review"}</span>
+          </div>
+          <div className="result-body">
+            <p style={{ fontSize: 13, color: "var(--text-2)", lineHeight: 1.7, marginBottom: 12 }}>{result.reason}</p>
+            {result.issues.length > 0 && (
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--amber)", marginBottom: 6, textTransform: "uppercase", letterSpacing: 1 }}>Issues</div>
+                {result.issues.map((iss, i) => (
+                  <div key={i} style={{ fontSize: 12, color: "var(--text-2)", padding: "6px 0", display: "flex", gap: 8, alignItems: "flex-start" }}>
+                    <Icon name="alert-tri" size={14} color="#fbbf24" />{iss}
+                  </div>
+                ))}
+              </div>
+            )}
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--green)", marginBottom: 6, textTransform: "uppercase", letterSpacing: 1 }}>Next Steps</div>
+              {result.actions.map((act, i) => (
+                <div key={i} style={{ fontSize: 12, color: "var(--text-2)", padding: "6px 0", display: "flex", gap: 8, alignItems: "flex-start" }}>
+                  <Icon name="arrow-right" size={14} color="#10b981" />{act}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+      {allAnswered && (
+        <button className="pbtn" onClick={() => { setStep(0); setAnswers({}); }} style={{ background: "var(--surface3)", boxShadow: "none", color: "var(--text-2)" }}>
+          Start Over
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ─── NOTICE & REDUNDANCY CALCULATOR ──────────────────────────────────────────
+
+function NoticeCalc({ onBack }) {
+  const [years, setYears] = useState("");
+  const [age, setAge] = useState("");
+  const [weeklyPay, setWeeklyPay] = useState("");
+  const [isSmallBiz, setIsSmallBiz] = useState(false);
+  const [result, setResult] = useState(null);
+
+  function calculate() {
+    const y = parseFloat(years) || 0;
+    const a = parseFloat(age) || 0;
+    const w = parseFloat(weeklyPay) || 0;
+
+    // Notice period
+    let noticeWeeks = 0;
+    if (y < 1) noticeWeeks = 1;
+    else if (y < 3) noticeWeeks = 2;
+    else if (y < 5) noticeWeeks = 3;
+    else noticeWeeks = 4;
+    if (a >= 45 && y >= 2) noticeWeeks += 1;
+
+    // Redundancy pay
+    let redundancyWeeks = 0;
+    if (!isSmallBiz) {
+      if (y >= 10) redundancyWeeks = 12;
+      else if (y >= 9) redundancyWeeks = 16;
+      else if (y >= 8) redundancyWeeks = 14;
+      else if (y >= 7) redundancyWeeks = 13;
+      else if (y >= 6) redundancyWeeks = 11;
+      else if (y >= 5) redundancyWeeks = 10;
+      else if (y >= 4) redundancyWeeks = 8;
+      else if (y >= 3) redundancyWeeks = 7;
+      else if (y >= 2) redundancyWeeks = 6;
+      else if (y >= 1) redundancyWeeks = 4;
+    }
+
+    setResult({
+      noticeWeeks,
+      noticePay: noticeWeeks * w,
+      redundancyWeeks,
+      redundancyPay: redundancyWeeks * w,
+      totalPay: (noticeWeeks + redundancyWeeks) * w,
+      extraWeek: a >= 45 && y >= 2,
+    });
+  }
+
+  return (
+    <div className="panel">
+      <button className="back-btn" onClick={onBack}><Icon name="arrow-left" size={16} /> Back to Tools</button>
+      <div className="info-card" style={{ background: "rgba(99,102,241,0.08)", borderColor: "rgba(99,102,241,0.2)" }}>
+        <div className="ic-title"><Icon name="calculator" size={16} color="#818cf8" /> Notice & Redundancy Calculator</div>
+        <div className="ic-body">Calculate your minimum notice period and redundancy entitlements under the National Employment Standards.</div>
+      </div>
+
+      <div className="form-row">
+        <div className="form-group">
+          <div className="form-label">Years of service</div>
+          <input className="tinput" type="number" step="0.1" value={years} onChange={e => setYears(e.target.value)} placeholder="e.g. 3.5" />
+        </div>
+        <div className="form-group">
+          <div className="form-label">Your age</div>
+          <input className="tinput" type="number" value={age} onChange={e => setAge(e.target.value)} placeholder="e.g. 35" />
+        </div>
+      </div>
+      <div className="form-group">
+        <div className="form-label">Weekly pay (before tax)</div>
+        <input className="tinput" type="number" step="0.01" value={weeklyPay} onChange={e => setWeeklyPay(e.target.value)} placeholder="e.g. 1200" />
+      </div>
+      <button className={`option-btn ${isSmallBiz ? "sel" : ""}`} onClick={() => setIsSmallBiz(!isSmallBiz)} style={{ padding: "10px 14px" }}>
+        <div className="opt-radio">{isSmallBiz && <div style={{ width: 8, height: 8, borderRadius: "50%", background: "var(--accent)" }} />}</div>
+        <div>
+          <div className="opt-label">Small business (under 15 employees)</div>
+          <div className="opt-desc">Exempt from NES redundancy pay</div>
+        </div>
+      </button>
+
+      <button className="pbtn" onClick={calculate} disabled={!years || !weeklyPay}>
+        Calculate Entitlements <Icon name="arrow-right" size={16} />
+      </button>
+
+      {result && (
+        <div className="result-card">
+          <div className="result-header">
+            <div className="result-header-icon" style={{ background: "rgba(99,102,241,0.1)" }}>
+              <Icon name="calculator" size={20} color="#818cf8" />
+            </div>
+            <h4>Your Entitlements</h4>
+          </div>
+          <div className="result-body">
+            <div className="result-row">
+              <span className="label">Notice period</span>
+              <span className="value">{result.noticeWeeks} week{result.noticeWeeks !== 1 ? "s" : ""}</span>
+            </div>
+            {result.extraWeek && (
+              <div className="result-row">
+                <span className="label" style={{ fontSize: 11, color: "var(--text-3)" }}>Includes +1 week (age 45+, 2+ years)</span>
+                <span className="value" style={{ color: "var(--green)", fontSize: 12 }}>Applied</span>
+              </div>
+            )}
+            <div className="result-row">
+              <span className="label">Notice pay</span>
+              <span className="value green">{fmtCurrency(result.noticePay)}</span>
+            </div>
+            <div className="result-row">
+              <span className="label">Redundancy pay ({result.redundancyWeeks} weeks)</span>
+              <span className="value green">{result.redundancyWeeks > 0 ? fmtCurrency(result.redundancyPay) : isSmallBiz ? "Exempt" : "N/A"}</span>
+            </div>
+          </div>
+          <div className="result-total">
+            <span className="label">Total minimum entitlement</span>
+            <span className="value">{fmtCurrency(result.totalPay)}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── SCENARIO TRIAGE ─────────────────────────────────────────────────────────
+
+function ScenarioTriage({ onBack }) {
+  const [situation, setSituation] = useState("");
+  const [result, setResult] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function triage() {
+    setLoading(true); setResult("");
+    try {
+      const reply = await callClaude(TRIAGE_PROMPT, [{
+        role: "user", content: `Here is my workplace situation:\n\n${situation}`
+      }]);
+      setResult(reply);
+    } catch { setResult("Something went wrong. Please try again."); }
+    setLoading(false);
+  }
+
+  return (
+    <div className="panel">
+      <button className="back-btn" onClick={onBack}><Icon name="arrow-left" size={16} /> Back to Tools</button>
+      <div className="info-card" style={{ background: "rgba(236,72,153,0.08)", borderColor: "rgba(236,72,153,0.2)" }}>
+        <div className="ic-title" style={{ color: "#ec4899" }}>
+          <Icon name="compass" size={16} color="#ec4899" /> What Just Happened?
+        </div>
+        <div className="ic-body">Describe what happened at work and we'll classify the issue, tell you where to go, and what to do next.</div>
+      </div>
+
+      <div className="form-group">
+        <div className="form-label">Describe your situation</div>
+        <textarea className="tarea" rows={5} value={situation} onChange={e => setSituation(e.target.value)}
+          placeholder={"e.g. \"My boss reduced my shifts from 5 to 2 days after I raised a safety concern. I've worked there for 2 years as a casual...\""} />
+      </div>
+
+      <button className={`pbtn ${loading ? "loading-btn" : ""}`} onClick={triage} disabled={loading || !situation.trim()}>
+        {loading ? <><Icon name="loader" size={16} /> Analysing...</> : <>Analyse My Situation <Icon name="arrow-right" size={16} /></>}
+      </button>
+
+      {result && <div className="rbox">{result}</div>}
+    </div>
+  );
+}
+
+// ─── DEADLINE TRACKER ────────────────────────────────────────────────────────
+
+function DeadlineTracker({ onBack }) {
+  const [selected, setSelected] = useState(null);
+  const [eventDate, setEventDate] = useState("");
+  const [tracked, setTracked] = useState([]);
+
+  function addDeadline() {
+    if (!selected || !eventDate) return;
+    const event = new Date(eventDate);
+    const deadlineInfo = DEADLINE_TYPES.find(d => d.id === selected);
+    const deadlineDate = deadlineInfo.days ? new Date(event.getTime() + deadlineInfo.days * 24 * 60 * 60 * 1000) : null;
+    const daysLeft = deadlineDate ? daysBetween(new Date(), deadlineDate) : null;
+
+    setTracked(prev => [...prev, {
+      ...deadlineInfo, eventDate: event, deadlineDate, daysLeft,
+      id: deadlineInfo.id + "_" + Date.now(),
+    }]);
+    setSelected(null);
+    setEventDate("");
+  }
+
+  function removeDeadline(id) {
+    setTracked(prev => prev.filter(d => d.id !== id));
+  }
+
+  return (
+    <div className="panel">
+      <button className="back-btn" onClick={onBack}><Icon name="arrow-left" size={16} /> Back to Tools</button>
+      <div className="info-card" style={{ background: "rgba(239,68,68,0.08)", borderColor: "rgba(239,68,68,0.2)" }}>
+        <div className="ic-title" style={{ color: "#ef4444" }}>
+          <Icon name="clock" size={16} color="#ef4444" /> Deadline Tracker
+        </div>
+        <div className="ic-body">Employment law has strict time limits. Track your deadlines so you don't miss your window to act.</div>
+      </div>
+
+      <div className="form-group">
+        <div className="form-label">Type of claim</div>
+        <div className="select-wrap">
+          <select value={selected || ""} onChange={e => setSelected(e.target.value || null)}>
+            <option value="">Select a claim type...</option>
+            {DEADLINE_TYPES.map(d => (
+              <option key={d.id} value={d.id}>{d.label}{d.days ? ` (${d.days} days)` : " (no strict limit)"}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {selected && (
+        <div style={{ animation: "slideUp 0.2s ease" }}>
+          <div className="form-group">
+            <div className="form-label">When did the event occur?</div>
+            <input className="tinput" type="date" value={eventDate} onChange={e => setEventDate(e.target.value)} />
+          </div>
+          <button className="pbtn" onClick={addDeadline} disabled={!eventDate} style={{ marginTop: 12 }}>
+            <Icon name="plus" size={16} /> Track This Deadline
+          </button>
+        </div>
+      )}
+
+      {tracked.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div className="slabel">Your tracked deadlines</div>
+          {tracked.map(d => {
+            const urgent = d.daysLeft !== null && d.daysLeft <= 7;
+            const warning = d.daysLeft !== null && d.daysLeft <= 14 && d.daysLeft > 7;
+            const expired = d.daysLeft !== null && d.daysLeft < 0;
+            return (
+              <div key={d.id} className={`deadline-card ${urgent || expired ? "urgent" : warning ? "warning" : ""}`}>
+                <div className="dl-top">
+                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: d.color, boxShadow: `0 0 8px ${d.color}40` }} />
+                  <span className="dl-type">{d.label}</span>
+                  <button onClick={() => removeDeadline(d.id)} style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", padding: 4 }}>
+                    <Icon name="x" size={14} color="#5a5a72" />
+                  </button>
+                </div>
+                <div className="dl-body">{d.desc}</div>
+                {d.daysLeft !== null ? (
+                  <div className="dl-countdown">
+                    {expired ? (
+                      <span style={{ color: "#ef4444", fontWeight: 700, fontSize: 14 }}>EXPIRED {Math.abs(d.daysLeft)} days ago</span>
+                    ) : (
+                      <>
+                        <div style={{ textAlign: "center" }}>
+                          <div className="num" style={{ color: urgent ? "#ef4444" : warning ? "#fbbf24" : "var(--text)" }}>{d.daysLeft}</div>
+                          <div className="unit">days left</div>
+                        </div>
+                        <span className="sep">|</span>
+                        <div style={{ fontSize: 12, color: "var(--text-2)" }}>
+                          Due: {d.deadlineDate.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <div className="dl-countdown">
+                    <span style={{ color: "var(--text-2)", fontSize: 12 }}>No strict time limit — but act promptly</span>
+                  </div>
+                )}
+                <div className="dl-meta">
+                  <span className="dl-tag">{d.body}</span>
+                  {d.form && <span className="dl-tag">{d.form}</span>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── EVIDENCE CHECKLIST ──────────────────────────────────────────────────────
+
+function EvidenceChecklist({ onBack }) {
+  const [situation, setSituation] = useState("");
+  const [result, setResult] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [checked, setChecked] = useState({});
+
+  async function generate() {
+    setLoading(true); setResult(""); setChecked({});
+    try {
+      const reply = await callClaude(EVIDENCE_PROMPT, [{
+        role: "user", content: `My workplace issue:\n\n${situation}`
+      }]);
+      setResult(reply);
+    } catch { setResult("Something went wrong. Please try again."); }
+    setLoading(false);
+  }
+
+  return (
+    <div className="panel">
+      <button className="back-btn" onClick={onBack}><Icon name="arrow-left" size={16} /> Back to Tools</button>
+      <div className="info-card" style={{ background: "rgba(139,92,246,0.08)", borderColor: "rgba(139,92,246,0.2)" }}>
+        <div className="ic-title" style={{ color: "#8b5cf6" }}>
+          <Icon name="clipboard" size={16} color="#8b5cf6" /> Evidence Checklist Builder
+        </div>
+        <div className="ic-body">Get a custom checklist of evidence to collect for your specific situation — before it disappears.</div>
+      </div>
+
+      <div className="form-group">
+        <div className="form-label">Describe your situation</div>
+        <textarea className="tarea" rows={4} value={situation} onChange={e => setSituation(e.target.value)}
+          placeholder='e.g. "I was dismissed after reporting safety issues. I worked as a kitchen hand for 2 years..."' />
+      </div>
+
+      <button className={`pbtn ${loading ? "loading-btn" : ""}`} onClick={generate} disabled={loading || !situation.trim()}>
+        {loading ? <><Icon name="loader" size={16} /> Building checklist...</> : <>Build My Evidence Checklist <Icon name="arrow-right" size={16} /></>}
+      </button>
+
+      {result && <div className="rbox">{result}</div>}
+    </div>
+  );
+}
+
+// ─── TOOLS HUB ───────────────────────────────────────────────────────────────
+
+function ToolsTab() {
+  const [activeTool, setActiveTool] = useState(null);
+
+  if (activeTool === "payslip") return <PayslipAuditor onBack={() => setActiveTool(null)} />;
+  if (activeTool === "eligibility") return <EligibilityChecker onBack={() => setActiveTool(null)} />;
+  if (activeTool === "notice") return <NoticeCalc onBack={() => setActiveTool(null)} />;
+  if (activeTool === "triage") return <ScenarioTriage onBack={() => setActiveTool(null)} />;
+  if (activeTool === "deadline") return <DeadlineTracker onBack={() => setActiveTool(null)} />;
+  if (activeTool === "evidence") return <EvidenceChecklist onBack={() => setActiveTool(null)} />;
+
+  return (
+    <div className="panel">
+      <div style={{ marginBottom: 4 }}>
+        <div style={{ fontSize: 16, fontWeight: 800, color: "var(--text)", marginBottom: 4 }}>Workplace Tools</div>
+        <div style={{ fontSize: 12, color: "var(--text-3)" }}>Calculators, checkers, and trackers for your rights</div>
+      </div>
+      <div className="tools-grid">
+        {TOOLS_LIST.map((tool, i) => (
+          <button key={tool.id} className="tool-card" onClick={() => setActiveTool(tool.id)}
+            style={{ "--tool-color": tool.color, animationDelay: `${i * 0.05}s`, animation: "slideUp 0.35s cubic-bezier(0.16,1,0.3,1) both" }}>
+            <div className="tool-icon" style={{ background: tool.bg }}>
+              <Icon name={tool.icon} size={20} color={tool.color} />
+            </div>
+            <div className="tool-label">{tool.label}</div>
+            <div className="tool-desc">{tool.desc}</div>
+          </button>
+        ))}
       </div>
     </div>
   );
@@ -795,7 +1691,7 @@ function AwardTab() {
     try {
       const reply = await callClaude(AWARD_PROMPT, [{
         role: "user",
-        content: `Industry: ${industry || "unknown"}. Role: ${role || "unknown"}. What Modern Award covers this person and what are their key minimum entitlements?`
+        content: `Industry: ${industry || "unknown"}. Role: ${role || "unknown"}. What Modern Award covers this person and what are their key minimum entitlements? Include actual dollar amounts for hourly rates and penalty rates.`
       }]);
       setResult(reply);
     } catch { setResult("Something went wrong. Please try again."); }
@@ -805,10 +1701,7 @@ function AwardTab() {
   return (
     <div className="panel">
       <div className="info-card">
-        <div className="ic-title">
-          <Icon name="info" size={16} color="#818cf8" />
-          What's a Modern Award?
-        </div>
+        <div className="ic-title"><Icon name="info" size={16} color="#818cf8" /> What's a Modern Award?</div>
         <div className="ic-body">Modern Awards set minimum pay rates, penalty rates, and entitlements for specific industries. Over 120 awards cover most Australian workers.</div>
       </div>
       <div>
@@ -817,8 +1710,7 @@ function AwardTab() {
           {AWARD_INDUSTRIES.map(ind => (
             <button key={ind.name} className={`ichip ${industry === ind.name ? "sel" : ""}`}
               onClick={() => setIndustry(ind.name)}>
-              <Icon name={ind.icon} size={18} />
-              <span>{ind.name}</span>
+              <Icon name={ind.icon} size={18} /><span>{ind.name}</span>
             </button>
           ))}
         </div>
@@ -829,10 +1721,7 @@ function AwardTab() {
           placeholder="e.g. Barista, Registered Nurse, Site Supervisor..." />
       </div>
       <button className={`pbtn ${loading ? "loading-btn" : ""}`} onClick={lookup} disabled={loading || (!industry && !role)}>
-        {loading
-          ? <><Icon name="loader" size={16} /> Looking up your award...</>
-          : <>Find My Award & Entitlements <Icon name="arrow-right" size={16} /></>
-        }
+        {loading ? <><Icon name="loader" size={16} /> Looking up your award...</> : <>Find My Award & Entitlements <Icon name="arrow-right" size={16} /></>}
       </button>
       {result && <div className="rbox">{result}</div>}
     </div>
@@ -872,8 +1761,7 @@ function LettersTab() {
         <div className="slabel">Choose a template type</div>
         <div className="lgrid">
           {LETTER_TYPES.map(lt => (
-            <button key={lt.id}
-              className={`lcard ${selected?.id === lt.id ? "sel" : ""}`}
+            <button key={lt.id} className={`lcard ${selected?.id === lt.id ? "sel" : ""}`}
               style={{ "--lcard-color": lt.color }}
               onClick={() => { setSelected(lt); setResult(""); }}>
               <div className="lci" style={{ background: lt.bg }}>
@@ -894,10 +1782,7 @@ function LettersTab() {
               placeholder='e.g. "I worked at a cafe for 3 years and was dismissed without warning..."' />
           </div>
           <button className={`pbtn ${loading ? "loading-btn" : ""}`} onClick={generate} disabled={loading}>
-            {loading
-              ? <><Icon name="loader" size={16} /> Generating...</>
-              : <>Generate {selected.label} <Icon name="arrow-right" size={16} /></>
-            }
+            {loading ? <><Icon name="loader" size={16} /> Generating...</> : <>Generate {selected.label} <Icon name="arrow-right" size={16} /></>}
           </button>
         </div>
       )}
@@ -930,9 +1815,7 @@ function ResourcesTab() {
             <div className="rname">{r.name}<span className="rtag">{r.tag}</span></div>
             <div className="rdesc">{r.desc}</div>
           </div>
-          <div className="rarr">
-            <Icon name="external" size={16} />
-          </div>
+          <div className="rarr"><Icon name="external" size={16} /></div>
         </a>
       ))}
       <div className="disclaimer">
@@ -949,9 +1832,10 @@ function ResourcesTab() {
 
 const TABS = [
   { id: "chat",      icon: "message",   label: "Ask AI"    },
-  { id: "award",     icon: "dollar",    label: "My Award"  },
-  { id: "letters",   icon: "file-text", label: "Templates" },
-  { id: "resources", icon: "link",      label: "Resources" },
+  { id: "tools",     icon: "grid",      label: "Tools"     },
+  { id: "letters",   icon: "file-text", label: "Letters"   },
+  { id: "award",     icon: "dollar",    label: "Award"     },
+  { id: "resources", icon: "link",      label: "Info"      },
 ];
 
 export default function App() {
@@ -966,30 +1850,14 @@ export default function App() {
     }}>
       <style>{CSS}</style>
 
-      {/* Ambient background glows */}
-      <div style={{
-        position: "fixed", top: "-10%", left: "-5%", width: 600, height: 600, borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(99,102,241,0.06) 0%, transparent 60%)",
-        pointerEvents: "none", filter: "blur(40px)",
-      }} />
-      <div style={{
-        position: "fixed", bottom: "-15%", right: "-10%", width: 500, height: 500, borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(139,92,246,0.05) 0%, transparent 60%)",
-        pointerEvents: "none", filter: "blur(40px)",
-      }} />
-      <div style={{
-        position: "fixed", top: "40%", right: "20%", width: 300, height: 300, borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(45,212,191,0.03) 0%, transparent 60%)",
-        pointerEvents: "none", filter: "blur(40px)",
-      }} />
+      <div style={{ position: "fixed", top: "-10%", left: "-5%", width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle, rgba(99,102,241,0.06) 0%, transparent 60%)", pointerEvents: "none", filter: "blur(40px)" }} />
+      <div style={{ position: "fixed", bottom: "-15%", right: "-10%", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(139,92,246,0.05) 0%, transparent 60%)", pointerEvents: "none", filter: "blur(40px)" }} />
+      <div style={{ position: "fixed", top: "40%", right: "20%", width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle, rgba(45,212,191,0.03) 0%, transparent 60%)", pointerEvents: "none", filter: "blur(40px)" }} />
 
       <div className="shell">
-        {/* Header */}
         <div className="header">
           <div className="header-row">
-            <div className="logo">
-              <Icon name="shield" size={22} color="white" strokeWidth={2} />
-            </div>
+            <div className="logo"><Icon name="shield" size={22} color="white" strokeWidth={2} /></div>
             <div>
               <div className="app-name">Unfired</div>
               <div className="app-sub">Australian Workplace Rights</div>
@@ -998,23 +1866,20 @@ export default function App() {
           </div>
         </div>
 
-        {/* Tabs */}
         <div className="tabs">
           {TABS.map(t => (
             <button key={t.id} className={`tab ${tab === t.id ? "on" : ""}`} onClick={() => setTab(t.id)}>
-              <span className="ti">
-                <Icon name={t.icon} size={18} color={tab === t.id ? "#818cf8" : "#5a5a72"} />
-              </span>
+              <span className="ti"><Icon name={t.icon} size={17} color={tab === t.id ? "#818cf8" : "#5a5a72"} /></span>
               {t.label}
             </button>
           ))}
         </div>
 
-        {/* Content */}
         <div className="content">
           {tab === "chat"      && <ChatTab />}
-          {tab === "award"     && <AwardTab />}
+          {tab === "tools"     && <ToolsTab />}
           {tab === "letters"   && <LettersTab />}
+          {tab === "award"     && <AwardTab />}
           {tab === "resources" && <ResourcesTab />}
         </div>
       </div>
